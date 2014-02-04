@@ -10,8 +10,7 @@ Usage:
 
 Set up Twitter auth codes in Settings -> Carbon Twitter Settings, then put this in your code:
 
-```
-#!php
+```php
 <?php
 $twitter = new Carbon\Twitter();
 $tweets = $twitter->get('carboncreative', 5);
