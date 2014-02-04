@@ -1,8 +1,7 @@
 <?php
-namespace Carbon;
 
 /**
- * Carbon\Twitter - manages twitter feeds on Wordpress installs.
+ * Carbon_Twitter - manages twitter feeds on Wordpress installs.
  *
  * Usage:
  * $twitter_username = 'bob';
@@ -14,7 +13,7 @@ namespace Carbon;
  * @author Tom Moitié
  * @author Dave Aspinal
  **/
-class Twitter {
+class Carbon_Twitter {
     /**
      * sets the cache length for finding new tweets in seconds
      **/
@@ -52,14 +51,23 @@ class Twitter {
     {
         include_once(ABSPATH . WPINC . '/feed.php');
 
-        $return_cache_amount = function ($seconds) {
-            return self::CACHE_LENGTH;
-        };
-        add_filter('wp_feed_cache_transient_lifetime', $return_cache_amount);
+        add_filter('wp_feed_cache_transient_lifetime', 'Carbon_Twitter::returnCacheLength');
         $rss = fetch_feed(plugins_url().'/carbon-twitter/tweetledee/userrss.php?user='.$username.'&limit='.$qty);
-        remove_filter('wp_feed_cache_transient_lifetime', $return_cache_amount);
+        remove_filter('wp_feed_cache_transient_lifetime', 'Carbon_Twitter::returnCacheLength');
 
         return $rss;
+    }
+
+    /**
+     * getRssFeed - returns a object of a twitter feed via RSS
+     *
+     * @param $username string twitter username
+     * @param $qty int number of tweets to retrieve
+     * @return SimpleXML RSS feed of tweets
+     * @author Tom Moitié
+     **/
+    public static function returnCacheLength($seconds) {
+        return self::CACHE_LENGTH;
     }
 
     /**
@@ -111,31 +119,39 @@ class Twitter {
             'Carbon Twitter Settings',
             'manage_options',
             'carbon-twitter-settings',
-            function() {
-                $out = array('success' => false);
-
-                if (!current_user_can('manage_options')) {
-                    throw new Exception('Access denied');
-                }
-                if (!empty($_REQUEST['submit'])) {
-                    $out['nonce_incorrect'] = true;
-                    if(check_admin_referer('carbon_twitter_settings')) {
-                        update_option('carbon_twitter_key', $_REQUEST['carbon_twitter_key']);
-                        update_option('carbon_twitter_secret', $_REQUEST['carbon_twitter_secret']);
-                        update_option('carbon_twitter_token', $_REQUEST['carbon_twitter_token']);
-                        update_option('carbon_twitter_token_secret', $_REQUEST['carbon_twitter_token_secret']);
-                        $out['nonce_incorrect'] = false;
-                        $out['success'] = true;
-                    }
-                }
-
-                $out['nonce'] = wp_nonce_field('carbon_twitter_settings', '_wpnonce', true, false);
-                $out['carbon_twitter_key'] = get_option('carbon_twitter_key');
-                $out['carbon_twitter_secret'] = get_option('carbon_twitter_secret');
-                $out['carbon_twitter_token'] = get_option('carbon_twitter_token');
-                $out['carbon_twitter_token_secret'] = get_option('carbon_twitter_token_secret');
-                include(__DIR__ . '/view/settings.php');
-            }
+            'Carbon_Twitter::settingsPage'
         );
+    }
+
+    /**
+     * addSettings - Adds a settings page for AWS set up.
+     *
+     * @return void
+     **/
+    public static function settingsPage()
+    {
+        $out = array('success' => false);
+
+        if (!current_user_can('manage_options')) {
+            throw new Exception('Access denied');
+        }
+        if (!empty($_REQUEST['submit'])) {
+            $out['nonce_incorrect'] = true;
+            if(check_admin_referer('carbon_twitter_settings')) {
+                update_option('carbon_twitter_key', $_REQUEST['carbon_twitter_key']);
+                update_option('carbon_twitter_secret', $_REQUEST['carbon_twitter_secret']);
+                update_option('carbon_twitter_token', $_REQUEST['carbon_twitter_token']);
+                update_option('carbon_twitter_token_secret', $_REQUEST['carbon_twitter_token_secret']);
+                $out['nonce_incorrect'] = false;
+                $out['success'] = true;
+            }
+        }
+
+        $out['nonce'] = wp_nonce_field('carbon_twitter_settings', '_wpnonce', true, false);
+        $out['carbon_twitter_key'] = get_option('carbon_twitter_key');
+        $out['carbon_twitter_secret'] = get_option('carbon_twitter_secret');
+        $out['carbon_twitter_token'] = get_option('carbon_twitter_token');
+        $out['carbon_twitter_token_secret'] = get_option('carbon_twitter_token_secret');
+        include(dirname(__FILE__) . '/view/settings.php');
     }
 }

@@ -8,6 +8,6 @@
  * Author URI: http://www.carboncreative.net/
  */
 
-require_once(__DIR__.'/Twitter.php');
+require_once(dirname(__FILE__).'/Twitter.php');
 
-add_action('admin_menu', 'Carbon\Twitter::addSettings');
+add_action('admin_menu', 'Carbon_Twitter::addSettings');
